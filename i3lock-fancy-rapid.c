@@ -39,6 +39,7 @@
 #include <X11/Xutil.h>
 #include <omp.h>
 #include <string.h>
+#include <math.h>
 
 void box_blur_h(unsigned char *dest, unsigned char *src, int height, int width,
                 int radius)
@@ -125,6 +126,16 @@ void box_blur(unsigned char *dest, unsigned char *src, int height, int width,
 
 }
 
+void adjust(unsigned char *src, int height, int width, int brightness)
+{
+    int len = height * width * 3;
+#pragma omp parallel for
+    for (int i = 0; i < len; i++) {
+        // TODO: check for overflow
+        src[i] = src[i] * brightness / 100;
+    }
+}
+
 void pixelate(unsigned char *dest, unsigned char *src, int height,
                    int width, int radius)
 {
@@ -177,13 +188,15 @@ void pixelate(unsigned char *dest, unsigned char *src, int height,
 
 int main(int argc, char *argv[])
 {
-    if (argc < 3) {
+    if (argc < 4) {
         fprintf(stderr,
-               "usage: %s radius times [OPTIONS]\n"
+               "usage: %s radius times brightness [OPTIONS]\n"
                "pass \"pixel\" for times to get pixelation\n",
                argv[0]);
         exit(EXIT_FAILURE);
     }
+
+    // TODO: validate arguments
 
     Display *display = XOpenDisplay(NULL);
     Window root = XDefaultRootWindow(display);
@@ -226,6 +239,9 @@ int main(int argc, char *argv[])
     }
     free(preblur);
 
+    int brightness = atoi(argv[3]);
+    adjust(postblur, height, width, brightness);
+
     int fds[2];
     pipe(fds);
     if (fork()) {
@@ -243,7 +259,7 @@ int main(int argc, char *argv[])
         new_argv[2] = "/dev/stdin";
         new_argv[3] = "--raw";
         new_argv[4] = fmt;
-        for (int i = 3; i < argc; ++i)
+        for (int i = 4; i < argc; ++i)
             new_argv[i + 2] = argv[i];
         new_argv[argc + 2] = NULL;
         execvp(new_argv[0], new_argv);

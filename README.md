@@ -18,11 +18,12 @@ make
 ## Usage
 
 ```bash
-i3lock-fancy-rapid radius times [OPTIONS]
+i3lock-fancy-rapid radius times brightness [OPTIONS]
 ```
 
 - `radius` is the kernel radius of box blur
 - `times` is the number of times box blur is applied (`pixel` for pixelation)
+- `brightness` is a percentage to adjust the brightness 
 - `OPTIONS` will be passed to `i3lock`
 
 The above demo uses `i3lock-fancy-rapid 5 3`.
