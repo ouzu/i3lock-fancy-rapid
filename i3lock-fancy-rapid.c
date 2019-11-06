@@ -129,10 +129,20 @@ void box_blur(unsigned char *dest, unsigned char *src, int height, int width,
 void adjust(unsigned char *src, int height, int width, int brightness)
 {
     int len = height * width * 3;
-#pragma omp parallel for
-    for (int i = 0; i < len; i++) {
-        // TODO: check for overflow
-        src[i] = src[i] * brightness / 100;
+
+    if (brightness < 100) {
+    #pragma omp parallel for
+        for (int i = 0; i < len; i++) {
+            src[i] = src[i] * brightness / 100;
+        }
+    }
+    if (brightness > 100) {
+    #pragma omp parallel for
+        for (int i = 0; i < len; i++) {
+            int rev = 255 - src[i];
+            rev = rev * 100 / brightness;
+            src[i] = 255 - rev;
+        }
     }
 }
 
